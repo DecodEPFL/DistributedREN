@@ -19,7 +19,7 @@ from torch.autograd import Variable
 dtype = torch.float
 device = torch.device("cpu")
 
-
+# RECURRENT NEURAL NETWORK
 class RNNModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
         super(RNNModel, self).__init__()
@@ -31,7 +31,7 @@ class RNNModel(nn.Module):
         self.layer_dim = layer_dim
 
         # RNN
-        self.rnn = nn.RNN(input_dim, hidden_dim, layer_dim, nonlinearity='tanh', batch_first=True)
+        self.rnn = nn.RNN(input_dim, hidden_dim, layer_dim, nonlinearity='relu', batch_first=True)
 
         # Readout layer
         self.fc = nn.Linear(hidden_dim, output_dim)
@@ -45,31 +45,7 @@ class RNNModel(nn.Module):
         out = out.squeeze()
         return out
 
-
-class LSTModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, layer_dim, output_dim):
-        super(LSTModel, self).__init__()
-
-        # Number of hidden dimensions
-        self.hidden_dim = hidden_dim
-
-        # Number of hidden layers
-        self.layer_dim = layer_dim
-
-        # RNN
-        self.lstm = nn.LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
-
-        # Readout layer
-        self.fc = nn.Linear(hidden_dim, output_dim)
-
-    def forward(self, x):
-        # One time step
-        out, (hn, cn) = self.lstm(x)
-        out = self.fc(out)
-        # out = out.squeeze()
-        return out
-
-
+# CONTRACTIVE REN
 class REN(nn.Module):
     def __init__(self, n, m, n_xi, l):
         super().__init__()

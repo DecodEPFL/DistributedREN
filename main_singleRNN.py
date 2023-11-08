@@ -1,4 +1,4 @@
-from models import LSTModel
+from models import RNNModel
 import numpy as np
 import math
 import matplotlib.pyplot as plt
@@ -16,92 +16,81 @@ device = torch.device("cpu")
 plt.close('all')
 # Import Data
 folderpath = os.getcwd()
-filepath = pjoin(folderpath, 'dataset_sysID_3tanks_final.mat')
+filepath = pjoin(folderpath, 'dataset_sysID_3tanks.mat')
 data = scipy.io.loadmat(filepath)
 
 dExp, yExp, dExp_val, yExp_val, Ts = data['dExp'], data['yExp'], \
     data['dExp_val'], data['yExp_val'], data['Ts'].item()
 nExp = yExp.size
 
-t = np.arange(0, np.size(dExp[0, 0], 1) * Ts, Ts)
+t = np.arange(0, np.size(dExp[0, 0], 1) * Ts-Ts, Ts)
 
-# plt.plot(t, yExp[0,-1])
-# plt.show()
+t_end = t.size
+
+u = torch.zeros(nExp, t_end, 1)
+y = torch.zeros(nExp, t_end, 3)
+inputnumberD =1
+
+for j in range(nExp):
+    inputActive = (torch.from_numpy(dExp[0, j])).T
+    u[j, :, :] = torch.unsqueeze(inputActive[:,inputnumberD], 1)
+    y[j, :, :] = (torch.from_numpy(yExp[0, j])).T
 
 seed = 1
 torch.manual_seed(seed)
 
-n = 1  # input dimensions
-inputnumberD = 1
-p = 3  # output dimensions
+idd = 1
+hdd = 20
+ldd = 5
+odd = yExp[0, 0].shape[0]
 
-n_xi = 9
-# nel paper n1, numero di stati
-l = 9  # nel paper q, dimension of the square matrix D11 -- number of _non-linear layers_ of the RE
-
-RENsys = torch.nn.Sequential(LSTModel(n, n_xi, l, p))
-
-# Define the system
-
-# Define Loss function
+RNN = RNNModel(idd, hdd, ldd, odd)
 MSE = nn.MSELoss()
 
 # Define Optimization method
-learning_rate = 1.0e-1
-optimizer = torch.optim.Adam(RENsys.parameters(), lr=learning_rate)
+learning_rate = 1.0e-2
+optimizer = torch.optim.Adam(RNN.parameters(), lr=learning_rate)
 optimizer.zero_grad()
 
-t_end = yExp[0, 0].shape[1] - 1
+t_end = yExp[0, 0].shape[1]
 
-epochs = 1
+epochs = 500
 LOSS = np.zeros(epochs)
 
 for epoch in range(epochs):
     if epoch == epochs - epochs / 2:
-        learning_rate = 1.0e-2
-        optimizer = torch.optim.Adam(RENsys.parameters(), lr=learning_rate)
-    if epoch == epochs - epochs / 6:
         learning_rate = 1.0e-3
-        optimizer = torch.optim.Adam(RENsys.parameters(), lr=learning_rate)
+        optimizer = torch.optim.Adam(RNN.parameters(), lr=learning_rate)
+    if epoch == epochs - epochs / 6:
+        learning_rate = 1.0e-4
+        optimizer = torch.optim.Adam(RNN.parameters(), lr=learning_rate)
     optimizer.zero_grad()
     loss = 0
-    for exp in range(nExp - 1):
-        y = torch.from_numpy(yExp[0, exp]).float().to(device)
-        y = y.squeeze()
-        yRENm = torch.randn(p, t_end + 1, device=device, dtype=dtype)
-        yRENm[:,0] = y[:,0]
-        xi = torch.randn(n_xi)
-        d = torch.from_numpy(dExp[0, exp]).float().to(device)
-        for t in range(1, t_end):
-            u = torch.tensor([d[inputnumberD, t]])
-            yRENm[:, t] = RENsys(u)
-        loss = loss + MSE(yRENm[:, 0:yRENm.size(1)], y[:, 0:t_end + 1])
-        # ignorare da loss effetto condizione iniziale
 
-    loss = loss / nExp
-    #loss.backward()
-    loss.backward(retain_graph=True)
-
+    yRNN = RNN(u)
+    yRNN = torch.squeeze(yRNN)
+    loss = MSE(yRNN, y)
+    loss.backward()
     optimizer.step()
-    RENsys.set_model_param()
-
     print(f"Epoch: {epoch + 1} \t||\t Loss: {loss}")
     LOSS[epoch] = loss
 
+t_end = yExp_val[0, 0].shape[1]
 
-t_end = yExp_val[0, 0].shape[1] - 1
+nExp = yExp_val.size
 
-yval = torch.from_numpy(yExp_val[0, 0]).float().to(device)
-yval = yval.squeeze()
+uval = torch.zeros(nExp, t_end, 1)
+yval = torch.zeros(nExp, t_end, 3)
 
-yRENm_val = torch.zeros(p, t_end + 1, device=device, dtype=dtype)
-yRENm_val[:,0] = yval[:,0]
-dval = torch.from_numpy(dExp_val[0, 0]).float().to(device)
-loss_val = 0
-for t in range(1, t_end):
-    u = torch.tensor([dval[inputnumberD, t]])
-    yRENm_val[:, t]= RENsys(u)
-    loss_val = loss_val + MSE(yRENm_val[:, 0:yRENm_val.size(1)], yval[:, 0:t_end + 1])
+for j in range(nExp):
+    inputActive = (torch.from_numpy(dExp_val[0, j])).T
+    uval[j, :, :] = torch.unsqueeze(inputActive[:,inputnumberD], 1)
+    yval[j, :, :] = (torch.from_numpy(yExp_val[0, j])).T
+
+yRNN_val = RNN(uval)
+yRNN_val = torch.squeeze(yRNN_val)
+
+loss_val = MSE(yRNN_val, yval)
 
 plt.figure('8')
 plt.plot(LOSS)
@@ -109,55 +98,52 @@ plt.title("LOSS")
 plt.show()
 
 plt.figure('9')
-plt.plot(yRENm[0, :].detach().numpy(), label='REN')
-plt.plot(y[0, :].detach().numpy(), label='y train')
-plt.title("output 1 train single REN")
+plt.plot(yRNN[0, :, 0].detach().numpy(), label='REN')
+plt.plot(y[0, :, 0].detach().numpy(), label='y train')
+plt.title("output 1 train single RNN")
 plt.legend()
 plt.show()
 
 plt.figure('10')
-plt.plot(yRENm_val[0, 0:t_end].detach().numpy(), label='REN val')
-plt.plot(yval[0, 0:t_end].detach().numpy(), label='y val')
-plt.title("output 1 val single REN")
+plt.plot(yRNN_val[:, 0].detach().numpy(), label='REN val')
+plt.plot(yval[0, :, 0].detach().numpy(), label='y val')
+plt.title("output 1 val single RNN")
 plt.legend()
 plt.show()
 
 plt.figure('11')
-plt.plot(yRENm[1, :].detach().numpy(), label='REN')
-plt.plot(y[1, :].detach().numpy(), label='y train')
-plt.title("output 2 train single REN")
+plt.plot(yRNN[0, :, 1].detach().numpy(), label='REN')
+plt.plot(y[0, :, 1].detach().numpy(), label='y train')
+plt.title("output 1 train single RNN")
 plt.legend()
 plt.show()
 
 plt.figure('12')
-plt.plot(yRENm_val[1, 0:t_end].detach().numpy(), label='REN val')
-plt.plot(yval[1, 0:t_end].detach().numpy(), label='y val')
-plt.title("output 2 val single REN")
+plt.plot(yRNN_val[:, 1].detach().numpy(), label='REN val')
+plt.plot(yval[0, :, 1].detach().numpy(), label='y val')
+plt.title("output 1 val single REN")
 plt.legend()
 plt.show()
 
 plt.figure('13')
-plt.plot(yRENm[2, :].detach().numpy(), label='REN')
-plt.plot(y[2, :].detach().numpy(), label='y train')
-plt.title("output 3 train single REN")
+plt.plot(yRNN[0, :, 2].detach().numpy(), label='REN')
+plt.plot(y[0, :, 2].detach().numpy(), label='y train')
+plt.title("output 1 train single RNN")
 plt.legend()
 plt.show()
 
 plt.figure('14')
-plt.plot(yRENm_val[2, 0:t_end].detach().numpy(), label='REN val')
-plt.plot(yval[2, 0:t_end].detach().numpy(), label='y val')
-plt.title("output 3 val single REN")
+plt.plot(yRNN_val[:, 2].detach().numpy(), label='REN val')
+plt.plot(yval[0, :, 2].detach().numpy(), label='y val')
+plt.title("output 1 val single RNN")
 plt.legend()
 plt.show()
 
+# plt.figure('15')
+# plt.plot(d[inputnumberD, :].detach().numpy(), label='input train')
+# plt.plot(dval[inputnumberD, :].detach().numpy(), label='input val')
+# plt.title("input single REN")
+# plt.legend()
+# plt.show()
 
-plt.figure('15')
-plt.plot(d[inputnumberD, :].detach().numpy(), label='input train')
-plt.plot(dval[inputnumberD, :].detach().numpy(), label='input val')
-plt.title("input single REN")
-plt.legend()
-plt.show()
-
-print(f"Loss Validation single REN: {loss_val}")
-
-scipy.io.savemat('data_singleREN.mat', dict(yRENm_val=yRENm_val.detach().numpy(), yval=yval.detach().numpy()))
+print(f"Loss Validation single RNN: {loss_val}")

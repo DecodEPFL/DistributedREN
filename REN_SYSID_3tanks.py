@@ -16,7 +16,7 @@ device = torch.device("cpu")
 plt.close('all')
 # Import Data
 folderpath = os.getcwd()
-filepath = pjoin(folderpath, 'dataset_sysID_3tanks_final.mat')
+filepath = pjoin(folderpath, 'dataset_sysID_3tanks.mat')
 data = scipy.io.loadmat(filepath)
 
 dExp, yExp, dExp_val, yExp_val, Ts = data['dExp'], data['yExp'], \
@@ -37,9 +37,9 @@ n = torch.tensor([2, 1, 1])  # input dimensions
 
 p = torch.tensor([1, 1, 1])  # output dimensions
 
-n_xi = np.array([8, 8, 8])
+n_xi = np.array([10, 10, 10])
 # nel paper n1, numero di stati
-l = np.array([8, 8, 8])  # nel paper q, dimension of the square matrix D11 -- number of _non-linear layers_ of the RE
+l = np.array([10, 10, 10])  # nel paper q, dimension of the square matrix D11 -- number of _non-linear layers_ of the RE
 
 M = torch.tensor([[0, 0, 1], [0, 0, 0], [1, 0, 0], [0, 1, 0]])
 M = M.float()
@@ -59,7 +59,7 @@ optimizer.zero_grad()
 
 t_end = yExp[0, 0].shape[1] - 1
 
-epochs = 120
+epochs = 400
 LOSS = np.zeros(epochs)
 loss = 0
 
@@ -198,5 +198,3 @@ print(f"param 3 RENs: {pytorch_total_params_3RENs}")
 
 print(f"Loss Validation 3 RENs: {loss_val}")
 
-
-scipy.io.savemat('data_3REN.mat', dict(yRENm_val3REN=yRENm_val.detach().numpy(), yval=yval.detach().numpy(), loss_val3REN=loss_val.detach().numpy(), numpar3REN=pytorch_total_params_3RENs))
