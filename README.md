@@ -47,4 +47,5 @@ The main dependencies required to run the Python code are:
 ## Citation
 
 If you use this code in your research, please cite the accompanying paper: 
+
 L. Massai, D. Saccani, L. Furieri, and G. Ferrari-Trecate. (2023). Unconstrained learning of networked nonlinear systems via free parametrization of stable interconnected operators. arXiv preprint
