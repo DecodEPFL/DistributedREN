@@ -23,7 +23,7 @@ The repository is organized as follows:
 
 ## Dependencies
 
-The main dependencies required to run the code are:
+The main dependencies required to run the Python code are:
 
 - numpy
 - scipy
