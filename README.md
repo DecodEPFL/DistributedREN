@@ -19,7 +19,13 @@ The repository is organized as follows:
 
 3. `models.py`: This Python script contains the classes for all the Neural Networks used in the paper. These include Recurrent Neural Networks, Recurrent Equilibrium Networks with different properties, and the class for the proposed approach.
 
-4. `REN_SYSD_3tanks.py`: This Python script is responsible for training the distributed operator described in the paper.
+4. `REN_SYSD_3tanks.py`: This Python script is responsible for training the distributed operator described in the paper for the system identification task.
+
+5. `main_singleREN.py`: This Python script is responsible for training a centralized REN for the system identification task described in the paper.
+
+6. `main_singleRNN.py`: This Python script is responsible for training a centralized RNN for the system identification task described in the paper.
+  
+   
 
 ## Dependencies
 
