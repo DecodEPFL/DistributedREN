@@ -34,11 +34,13 @@ The main dependencies required to run the Python code are:
 
 ## Usage
 
-1. Run `main_simulink_3tanks.m` to perform simulations and generate the dataset.
+1. Run `main_data_generator.m` to perform simulations and generate the dataset.
 
 2. Use the generated dataset (`dataset_sysID_3tanks.mat`) for training and testing the models.
 
 3. Train the distributed operator using `main_sysid_3tanks.ipynb`.
+
+4. Test the trained model using `run_model.py` to visualize the results.
 
 ## License
 This work is licensed under a
