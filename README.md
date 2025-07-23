@@ -13,19 +13,15 @@ For inquiries about the code, please contact:
 
 The repository is organized as follows:
 
-1. `main_simulink_3tanks.m`: This MATLAB script is responsible for performing the simulations to collect data. It contains the parameters for the simulations and executes the Simulink file named `sim_3tank.slx`. The script generates the dataset in the file `dataset_sysID_3tanks.mat`.
+1. `main_data_generator.m`: This MATLAB script is responsible for performing the simulations to collect data. It contains the parameters for the simulations and executes the Simulink file named `tank_simulator.slx`. The script generates the dataset in the file `dataset_sysID_3tanks.mat`.
 
-2. `sim_3tank.slx`: This Simulink model is used in conjunction with `main_simulink_3tanks.m` to perform simulations and generate the dataset.
+2. `tank_simulator.slx`: This Simulink model is used in conjunction with `main_data_generator.m` to perform simulations and generate the dataset.
 
 3. `models.py`: This Python script contains the classes for all the Neural Networks used in the paper. These include Recurrent Neural Networks, Recurrent Equilibrium Networks with different properties, and the class for the proposed approach.
 
-4. `REN_SYSD_3tanks.py`: This Python script is responsible for training the distributed operator described in the paper for the system identification task.
+4. `main_sysid_3tanks.ipynb`: This Jupyter Notebook is responsible for training the distributed operator described in the paper as well as single operators for the system identification task.
 
-5. `main_singleREN.py`: This Python script is responsible for training a centralized REN for the system identification task described in the paper.
-
-6. `main_singleRNN.py`: This Python script is responsible for training a centralized RNN for the system identification task described in the paper.
-  
-   
+5. `run_model.py`: This Python script is used to run the trained model on the test dataset and visualize the results.
 
 ## Dependencies
 
@@ -42,7 +38,7 @@ The main dependencies required to run the Python code are:
 
 2. Use the generated dataset (`dataset_sysID_3tanks.mat`) for training and testing the models.
 
-3. Train the distributed operator using `REN_SYSD_3tanks.py`.
+3. Train the distributed operator using `main_sysid_3tanks.ipynb`.
 
 ## License
 This work is licensed under a
